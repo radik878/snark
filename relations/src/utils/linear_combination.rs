@@ -599,3 +599,31 @@ impl<F: Field> Sub<(F, LinearCombination<F>)> for LinearCombination<F> {
         self + (-coeff, other)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::LinearCombination;
+    use crate::utils::variable::Variable;
+    use ark_test_curves::bls12_381::Fr;
+
+    #[test]
+    fn add_assign_merges_on_equality_small_vec_singleton() {
+        // Start with a length-1 LC so the small-vector linear search branch is used.
+        let v = Variable::witness(5);
+        let mut lc: LinearCombination<Fr> = LinearCombination::from((Fr::from(3u64), v));
+        // Adding the same variable should merge coefficients, not insert a duplicate.
+        lc += (Fr::from(2u64), v);
+
+        assert_eq!(
+            lc.len(),
+            1,
+            "should not create a duplicate entry for the same variable"
+        );
+        assert_eq!(lc[0].1, v, "variable should remain the same entry");
+        assert_eq!(
+            lc[0].0,
+            Fr::from(5u64),
+            "coefficients should sum when variables are equal"
+        );
+    }
+}
